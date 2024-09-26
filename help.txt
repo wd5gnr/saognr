@@ -1,0 +1,47 @@
+SAOGNR - by Al Williams (WD5GNR); Hackaday
+
+This SAO can send morse code messages. By defualt it has a stock message (there are 10 messages) that it plays with
+800 Hz tone at 13 WPM. It repeats every 30 seconds.
+
+However, you can change all of these things. Each message is in a file MessageX.txt (e.g., Message2.txt). You can 
+select a message using the commands below.
+
+The only button interface is the BOOTSEL button. If you press it briefly it will start or stop the code playback.
+
+If you hold the button for more than a second or so, you will enter menu mode. Code playback will stop and the first
+LED will turn to a solid color. There are two menu levels. A violet LED is the first level and a blue LED is the second.
+
+The second LED will show a reistor color code and send a number in Morse. The colors are:
+Dim purple - 0 (no black on an LED)
+Brownish yellow - 1
+Red -2
+Orangeish - 3
+Yellow - 4
+Green - 5
+Blue - 6
+Violet - 7
+Dim white - 8
+Bright white - 9
+
+Use the bootsel button to change your selection (if you want to change it) and then long press to accept. 
+
+The first level menu commands are:
+0 - Exit menu
+1 - Select message (0-9 on submenu)
+2 - Select delay in seconds (30, 60, 90, 300, 600, 900, 1800, 3600, 7200, 0 - zero is manual trigger only)
+3 - Select speed in WPM (13, 5, 20, 25, 50)
+4 - Select tone (800, 440, 1000, 1200)
+5 - Save current configuration (0=no, 1=yes, 2=delete configuration; NOTE: configuration loads on reboot)
+6 - Reset to default configuration (0=no, 1=yes; NOTE: does not save values)
+
+I2C Interface
+If you send normal ASCII bytes via I2C they will be sent (perhaps after whatever is currently being sent)
+
+If you want to send the commands 1-6, you add 80 hex to them. Each command <=9 (currently 6 is the last one)
+requires a second byte that will be between C0-C9 to do a menu selection
+
+So to select message 4 you would send 0x81 0xC4, for example.
+
+Commands >9 may or may not take more bytes. Currently there is only one:
+
+0x8E - abort whatever is being sent immediately (no second byte)

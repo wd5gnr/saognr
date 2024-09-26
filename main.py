@@ -1,0 +1,2 @@
+import saognr
+saognr.main()

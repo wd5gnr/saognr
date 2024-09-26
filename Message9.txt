@@ -1,0 +1,1 @@
+# This message is blank in case you don't want to interfere with I2C output (or turn delay to 0 to preserve manual trigger)

@@ -1,48 +1,66 @@
 import time
 
-# handle a menu... 
-# buttons is the button object to use
-# leds are where to control the leds
-# feedback is optional and is the Morse sending class to send feedback (digits)
-# mcolor is the color of the first LED initially
-# the idea is you can use the first LED to indicate which level of menu you are on.
-# one color for level 1, another for level 2
-# Or you could set one color for level 1 
-# and then set the color to the command "color" for level 2
+# Menu system for selecting options using buttons and providing feedback via LEDs and optional Morse code
+# - buttons: the button object to handle user input
+# - leds: an optional LED strip or display for visual feedback (can show menu levels and values)
+# - feedback: an optional Morse class instance for audio feedback (e.g., sending digits in Morse code)
+# - mcolor: the color for the first LED to indicate the menu level (default is purple)
 
-MENU_SCAN_TIME=0.05   # how often to scan buttons
+MENU_SCAN_TIME = 0.05  # How often to scan the buttons (in seconds)
 
 class MenuSystem:
-    def __init__(self,buttons,leds=None,feedback=None,mcolor=(127,0,255)):
-        self.buttons=buttons
-        self.leds=leds
-        self.fb=feedback
-        self.mcolor=mcolor
-    # resistor color codes 
-    # with some concessions to reality
-    # black (not really), brown (sort of), red, orange (sort of), yellow, green, blue, violet, gray (sort of), white
-    colors=[(10,0,10),(34,17,0),(255,0,0),(255,165,0),(255,255,0),(0,255,0),(0,0,255),(127,0,255),(64,64,64),(255,255,255)]
-    def menu(self,value=0,max=9):
-        if self.fb:  # if feedback enabled, stop anything sending and send our value
+    def __init__(self, buttons, leds=None, feedback=None, mcolor=(127, 0, 255)):
+        self.buttons = buttons  # Button input handler
+        self.leds = leds  # LED strip or LED display (optional)
+        self.fb = feedback  # Feedback system (optional, for sending Morse code)
+        self.mcolor = mcolor  # Default color for the first LED (menu level indicator)
+    
+    # Resistor color codes (approximate RGB values for each color)
+    # Black is excluded, and some colors (brown, orange, gray) are approximate.
+    colors = [
+        (10, 0, 10),  # Not really black
+        (34, 17, 0),  # Brown (not exact)
+        (255, 0, 0),  # Red
+        (255, 165, 0),  # Orange (sort of)
+        (255, 255, 0),  # Yellow
+        (0, 255, 0),  # Green
+        (0, 0, 255),  # Blue
+        (127, 0, 255),  # Violet
+        (64, 64, 64),  # Gray (sort of)
+        (255, 255, 255)  # White
+    ]
+    
+    # Main menu logic
+    # - value: the current selected value (default 0)
+    # - max: the maximum selectable value (default 9)
+    def menu(self, value=0, max=9):
+        if self.fb:  # If feedback is enabled, stop any active feedback and send the current value
             self.fb.abort()
             self.fb.send(str(value))
-        while True:
-            if self.leds:
-                self.leds[0]=self.mcolor   # show menu level to 
-                self.leds[1]=self.colors[value]  # show current value
-                self.leds.write()
-            if self.buttons.btn_count!=0 and self.buttons.btn_off!=0:     # don't care about super long press
-                if self.buttons.btn_count>100:  # should respect threshold (long press)
-                    self.buttons.btn_count=0
-                    if self.fb:   # if feedback, stop beeping
-                        self.fb.abort()
-                    return value   # done
-                self.buttons.btn_count=0  # short press
-                value=value+1
-                if value>max:
-                    value=0
-                if self.fb:
-                    self.fb.abort()
-                    self.fb.send(str(value))  # send this value
-            time.sleep(MENU_SCAN_TIME)  # fast wait
 
+        while True:
+            # Update the LEDs with the current menu level and value
+            if self.leds:
+                self.leds[0] = self.mcolor  # Set the color of the first LED (menu level indicator)
+                self.leds[1] = self.colors[value]  # Set the color of the second LED (current value indicator)
+                self.leds.write()  # Write the changes to the LEDs
+
+            # Handle button input
+            if self.buttons.btn_count != 0 and self.buttons.btn_off != 0:  # Check for valid button press
+                if self.buttons.btn_count > 100:  # Long press (threshold respected)
+                    self.buttons.btn_count = 0  # Reset button count
+                    if self.fb:  # If feedback is enabled, stop any active feedback
+                        self.fb.abort()
+                    return value  # Return the selected value and exit the menu
+
+                self.buttons.btn_count = 0  # Reset for short press
+                value += 1  # Increment the value
+                if value > max:  # If value exceeds max, wrap around to 0
+                    value = 0
+
+                # Send feedback (new value) if enabled
+                if self.fb:
+                    self.fb.abort()  # Stop any ongoing Morse code feedback
+                    self.fb.send(str(value))  # Send the new value as Morse code
+
+            time.sleep(MENU_SCAN_TIME)  # Wait briefly before checking buttons again

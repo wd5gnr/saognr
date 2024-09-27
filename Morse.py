@@ -1,176 +1,174 @@
 import time
 from machine import Timer
-from config import config
+from config import Config  
 
-# This class doesn't know about audio or LEDs or anything else
-# It just does code and you have to override setup and/or proc_input to do what you really want
-# That means you could use this in many places
-# The setup has to set up whatever you are doing to send a dot or a dash
-# That might mean keying a transmitter or a light or a buzzer or whatever you do to make dots and dashes
-
-
-
+# This class handles Morse code timing and sequencing.
+# It doesn't know about audio, LEDs, or other outputs.
+# You must override `setup` and/or `proc_input` in a subclass
+# to define what happens for a dot, dash, or stop (e.g., keying a transmitter, lighting a LED).
 
 class Morse:
-    # code sounds a little more natural with some extra spaces, but you can change that if you like
-    def __init__(self, wpm=config.DEF_WPM, cspace_xtra=config.DEF_CSPACE_XTRA, wspace_xtra=config.DEF_WSPACE_XTRA):
-        self.timer=Timer(-1) # 1 ms timer
+    # Morse code is slightly more readable with extra spaces between characters,
+    # but you can adjust this using the cspace_xtra and wspace_xtra values.
+    def __init__(self, wpm=Config.DEFAULT_WPM, cspace_xtra=Config.DEFAULT_EXTRA_CHAR_SPACE, 
+                 wspace_xtra=Config.DEFAULT_EXTRA_WORD_SPACE):
+        self.timer = Timer(-1)  # 1 ms timer
         self.timer.init(period=1, mode=Timer.PERIODIC, callback=lambda t: self.timer_callback(t))
-        self.sequence=[]  # list of schedule events (dots/dashes/spaces)
-        self.wpm=wpm
-        self.setscale()  # compute delays from wpm
-        self.cspace_xtra=cspace_xtra
-        self.wspace_xtra=wspace_xtra
- # constants
-    DOT=1
-    DASH=2
-    STOP=0
-    
-    # every time the WPM changes, we need to recalculate the delayscale (see http://www.kent-engineers.com/codespeed.htm)
-    def setscale(self):
-        self.delayscale=int(1200/self.wpm+0.5)
-    
-    # do we have more things to send?
-    def sending(self):
-        return self.sequence!=[]
-    
-    # stop sending things now
-    def abort(self):
-        self.setup(0)
-        self.sequence=[]
-    
-    def proc_input(self):     # a place to process inputs (used in subclasses)
-        pass
-        
-    # set up output
-    def setup(self,element):  # This is a stupid function but you will override it
-        if element==Morse.DOT:
-            print(".")
-        elif element==Morse.DASH:
-            print("-")
-        # normally you'd handle Morse.STOP too but here we don't care
-        
-    # The timer processes tuples ( count, element, in_progressflag)
-    # The count will work down to zero, the element is DOT/DASH/SPACE, in progress is always false until
-    # the callback changes it to True
-    # the countdown is in milliseconds
-    def timer_callback(self, timer):
-        self.proc_input()
-        if not self.sequence:
-            return  # No more items to process, exit the callback
+        self.sequence = []  # List of scheduled events (dots, dashes, spaces)
+        self.wpm = wpm
+        self.setscale()  # Calculate delays based on words per minute (WPM)
+        self.cspace_xtra = cspace_xtra  # Extra character space
+        self.wspace_xtra = wspace_xtra  # Extra word space
 
-        # Get the first tuple in the list
-        item = self.sequence[0]
-        duration, element, in_progress = item
+    # Constants to represent the elements of Morse code
+    DOT = 1
+    DASH = 2
+    STOP = 0
+
+    # Recalculate delays based on WPM (Words Per Minute)
+    def setscale(self):
+        # Calculate delay scale in milliseconds per dot (from WPM)
+        self.delayscale = int(1200 / self.wpm + 0.5)  # 1200ms per word, rounded
+
+    # Check if there are more Morse code elements to send
+    def sending(self):
+        return bool(self.sequence)
+
+    # Stop sending Morse code
+    def abort(self):
+        self.setup(Morse.STOP)  # Turn off any active signal
+        self.sequence.clear()  # Clear the sequence list
+
+    # Process input (override this in a subclass if needed)
+    def proc_input(self):
+        pass
+
+    # Setup the output (override this in a subclass)
+    def setup(self, element):
+        # For testing purposes, print the dots and dashes to the console.
+        if element == Morse.DOT:
+            print(".")  # Represents a dot
+        elif element == Morse.DASH:
+            print("-")  # Represents a dash
+        # Normally you'd handle Morse.STOP (0) here too, but for now, we ignore it.
+
+    # Timer callback to process the next Morse element
+    def timer_callback(self, timer):
+        self.proc_input()  # Process input in case there's user interaction (e.g., button press)
+
+        if not self.sequence:
+            return  # No more Morse code to send, so exit
+
+        # Get the current item in the sequence
+        duration, element, in_progress = self.sequence[0]
 
         if not in_progress:
-            # First time seeing this item, call setup and mark as in progress
+            # If not already in progress, start the new Morse element
             self.setup(element)
-            self.sequence[0] = (duration - 1, element, True)
+            self.sequence[0] = (duration - 1, element, True)  # Mark it as in progress
         else:
-            # Item is already in progress, just decrement the tick count
+            # If in progress, decrement the duration and continue
             self.sequence[0] = (duration - 1, element, True)
-            # If the duration has reached zero, remove the item from the list
-            # Note we will still handle the case where duration is 1
+
             if self.sequence[0][0] <= 0:
+                # Remove the item from the sequence if its duration is complete
                 self.sequence.pop(0)
-                self.setup(0)  # everything off
+                self.setup(Morse.STOP)  # Stop the signal when the duration ends
 
-    # queue up a dot, dash, or one of the space types             
+    # Queue a dot in the sequence
     def dot(self):
-        self.sequence.append((self.delayscale,1,False))
-        self.sequence.append((self.delayscale,0,False))
+        self.sequence.append((self.delayscale, Morse.DOT, False))  # Append dot duration
+        self.sequence.append((self.delayscale, Morse.STOP, False))  # Append space after the dot
 
+    # Queue a dash in the sequence
     def dash(self):
-        self.sequence.append((3*self.delayscale,2,False))
-        self.sequence.append((self.delayscale,0,False))
+        self.sequence.append((3 * self.delayscale, Morse.DASH, False))  # Append dash duration (3x longer than dot)
+        self.sequence.append((self.delayscale, Morse.STOP, False))  # Append space after the dash
 
+    # Queue a character space
     def cspace(self):
-        self.sequence.append((self.delayscale+self.cspace_xtra,0,False))
-        
-    def wspace(self): # note: the 7th delay is the previous cspace!
-        self.sequence.append((6*self.delayscale+self.wspace_xtra,0,False))
-    
-    # queue an arbitrary delay in seconds
-    def delay(self,n=1):  # delay some number of seconds
-        for i in range(n):
-            self.sequence.append((1000,0,False))
+        self.sequence.append((self.delayscale + self.cspace_xtra, Morse.STOP, False))  # Append character space
 
-# the Morse code table (note all uppercase)
+    # Queue a word space (note: the previous character space counts as the first unit of the word space)
+    def wspace(self):
+        self.sequence.append((6 * self.delayscale + self.wspace_xtra, Morse.STOP, False))  # Append word space
+
+    # Queue an arbitrary delay in seconds
+    def delay(self, n=1):
+        for _ in range(n):
+            self.sequence.append((1000, Morse.STOP, False))  # Delay for `n` seconds
+
+    # Morse code dictionary (uppercase characters)
     morse = {
-        "A":".-",
-        "B":"-...",
-        "C":"-.-.",
-        "D":"-..",
-        "E":".",
-        "F":"..-.",
-        "G":"--.",
-        "H":"....",
-        "I":"..",
-        "J":".---",
-        "K":"-.-",
-        "L":".-..",
-        "M":"--",
-        "N":"-.",
-        "O":"---",
-        "P":".--.",
-        "Q":"--.-",
-        "R":".-.",
-        "S":"...",
-        "T":"-",
-        "U":"..-",
-        "V":"...-",
-        "W":".--",
-        "X":"-..-",
-        "Y":"-.--",
-        "Z":"--..",
-        "0":"-----",
-        "1":".----",
-        "2":"..---",
-        "3":"...--",
-        "4":"....-",
-        "5":".....",
-        "6":"-....",
-        "7":"--...",
-        "8":"---..",
-        "9":"----.",
-        ".":".-.-.-",
-        ",":"--..--",
-        "=":"-...-",   # BT
-        "/":"-..-.",
-        "?":"..--..",
-        ":":"---...",
-        "-":"-....-",
-        "!":"-.-.--",
-        "+":".-.-."    # AR
+        "A": ".-",
+        "B": "-...",
+        "C": "-.-.",
+        "D": "-..",
+        "E": ".",
+        "F": "..-.",
+        "G": "--.",
+        "H": "....",
+        "I": "..",
+        "J": ".---",
+        "K": "-.-",
+        "L": ".-..",
+        "M": "--",
+        "N": "-.",
+        "O": "---",
+        "P": ".--.",
+        "Q": "--.-",
+        "R": ".-.",
+        "S": "...",
+        "T": "-",
+        "U": "..-",
+        "V": "...-",
+        "W": ".--",
+        "X": "-..-",
+        "Y": "-.--",
+        "Z": "--..",
+        "0": "-----",
+        "1": ".----",
+        "2": "..---",
+        "3": "...--",
+        "4": "....-",
+        "5": ".....",
+        "6": "-....",
+        "7": "--...",
+        "8": "---..",
+        "9": "----.",
+        ".": ".-.-.-",
+        ",": "--..--",
+        "=": "-...-",  # BT
+        "/": "-..-.",
+        "?": "..--..",
+        ":": "---...",
+        "-": "-....-",
+        "!": "-.-.--",
+        "+": ".-.-."  # AR
     }
 
-# if you want to add more punctuation see https://k3wwp.com/cw_ss_list_punc.html
-
-# send a string. Spaces/CR/LF are OK. ~ delays 1 second
-# control characters are ignored, but others issue a warning
-# that you will probably never see and keeps going
-# characters can be upper/lower
-    def send(self,input_string):
+    # Send a string in Morse code
+    def send(self, input_string):
         for char in input_string:
-            if char == " " or char=='\r' or char=='\n':
+            if char == " " or char == '\r' or char == '\n':
                 self.wspace()  # Call wspace() for word space
                 continue
-            if char == config.DELAY_CHAR:
-                self.delay()
+            if char == Config.DELAY_CHAR:
+                self.delay()  # Delay 1 second for special delay character
                 continue
-            if char < ' ':
-                continue   # ignore control characters
-            char = char.upper()  # Convert character to upper case
+            if char < ' ':  # Ignore control characters
+                continue
+            char = char.upper()  # Convert to uppercase
             if char not in self.morse:
-                print(f"Warning: '{char}' not found in Morse dictionary")
+                print(f"Warning: '{char}' not found in Morse dictionary")  # Warn for unknown characters
                 continue
-            morse_code = self.morse[char]  # Lookup in the morse dictionary
-            # queue the dots and dashes
+            morse_code = self.morse[char]  # Get Morse code for character
+
+            # Queue dots and dashes for the Morse code of this character
             for symbol in morse_code:
                 if symbol == ".":
-                    self.dot()  # Call dot() for a period
+                    self.dot()  # Queue a dot
                 elif symbol == "-":
-                    self.dash()  # Call dash() for a dash
-            
-            self.cspace()  # Call cspace() after processing the character
+                    self.dash()  # Queue a dash
+
+            self.cspace()  # Append a character space after the letter

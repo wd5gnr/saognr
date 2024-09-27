@@ -6,7 +6,7 @@ This SAO can send morse code messages. By defualt it has a stock message (there 
 However, you can change all of these things. Each message is in a file MessageX.txt (e.g., Message2.txt). You can 
 select a message using the commands below.
 
-The only button interface is the BOOTSEL button. If you press it briefly it will start or stop the code playback.
+The only button interface is the BOOTSEL button on the RP2040-Zero. If you press it briefly it will start or stop the code playback.
 
 If you hold the button for more than a second or so, you will enter menu mode. Code playback will stop and the first
 LED will turn to a solid color. There are two menu levels. A violet LED is the first level and a blue LED is the second.
@@ -45,3 +45,24 @@ So to select message 4 you would send 0x81 0xC4, for example.
 Commands >9 may or may not take more bytes. Currently there is only one:
 
 0x8E - abort whatever is being sent immediately (no second byte)
+
+Note: Message 9 is set to empty so if you want to use ONLY as an I2C output you can select that mesage 
+OR set the delay to 0 (which will still let you manually trigger with the button)
+
+Class Hiearchy
+MorseMain (saognr.py) - The main Class
+MenuMorse - Morse code with menu callbacks
+MorseCode - General morse code with LEDs
+Morse - General reusable Morse engine
+
+MenuSystem - Generic Menu system (note: i2ctarget also provides .menu())
+
+BSButton (button.py) - Specific button that uses bootselect button on Rp2040
+Button - Generic button
+
+i2cmenutarget (i2ctarget.py) - i2c receiver that can optionally act as menu input
+i2ctarget - Polling reception of data via I2C and can stand in for a menu object
+
+Other files
+MessageN.txt (N=0 to 9): Message to send. ~ is a long (1s) pause. You can include #comments which go to the end of the line
+saognr.cfg Config file used to save state for reboot

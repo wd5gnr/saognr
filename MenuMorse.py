@@ -14,16 +14,18 @@ class MenuMorse(MorseCode):
         self.thresh1=thresh1
         self.thresh2=thresh2
         self.button=BSButton()
+        self.button.start()
         
-    def button_push(self):
+    def button_push(self):   # short press
         print("Push")
         
-    def button_long(self):
+    def button_long(self):   # long press 
         print("Long")
         
-    def button_hold(self):
+    def button_hold(self):  # button hold down isn't a great idea (very long press)
         print("Hold")
-        
+
+  # process button lengths and call the right place for subclasses      
     def basemenu(self,count):
         if self.menu_lock:
             return
@@ -47,6 +49,12 @@ class MenuMorse(MorseCode):
             self.button_hold()
             self.menu_lock=False
  
+ # Base class calls us periodically so we can scan for inputs
+ # the button works where btn_count is how long the button has 
+ # been pressed (so far). btn_off is False if the button is still
+ # down. So, nominally, you want to wait for btn_off is 1
+ # and btn_count is non-zero to read a button then reset btn_count
+ # yourself
     def proc_input(self):
         super().proc_input()
         if self.button.btn_count!=0 and self.button.btn_off!=0:

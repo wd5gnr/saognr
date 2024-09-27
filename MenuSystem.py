@@ -21,8 +21,6 @@ class MenuSystem:
                     self.buttons.btn_count=0
                     if self.fb:
                         self.fb.abort()
-                        self.fb.send("E")
-                        time.sleep(0.2)
                     return value
                 self.buttons.btn_count=0
                 value=value+1

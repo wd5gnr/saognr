@@ -3,13 +3,18 @@ from machine import Timer
 
 # This class doesn't know about audio or LEDs or anything else
 # It just does code and you have to override setup and/or proc_input to do what you really want
+# That means you could use this in many places
+# The setup has to set up whatever you are doing to send a dot or a dash
+# That might mean keying a transmitter or a light or a buzzer or whatever you do to make dots and dashes
+
 class Morse:
+    # code sounds a little more natural with some extra spaces, but you can change that if you like
     def __init__(self, wpm=13, cspace_xtra=1, wspace_xtra=1):
         self.timer=Timer(-1)
         self.timer.init(period=1, mode=Timer.PERIODIC, callback=lambda t: self.timer_callback(t))
         self.sequence=[]
         self.wpm=wpm
-        self.delayscale=int(1200/wpm+0.5)
+        self.setscale()
         self.cspace_xtra=cspace_xtra
         self.wspace_xtra=wspace_xtra
  # constants
@@ -17,12 +22,15 @@ class Morse:
     DASH=2
     STOP=0
     
+    # every time the WPM changes, we need to recalculate the delayscale (see http://www.kent-engineers.com/codespeed.htm)
     def setscale(self):
         self.delayscale=int(1200/self.wpm+0.5)
     
+    # do we have more things to send?
     def sending(self):
         return self.sequence!=[]
     
+    # stop sending things now
     def abort(self):
         self.setup(0)
         self.sequence=[]
@@ -37,6 +45,10 @@ class Morse:
         elif element==Morse.DASH:
             print("-")
         
+    # The timer processes tuples ( count, element, in_progressflag)
+    # The count will work down to zero, the element is DOT/DASH/SPACE, in progress is always false until
+    # the callback changes it to True
+    # the countdown is in milliseconds
     def timer_callback(self, timer):
         self.proc_input()
         if not self.sequence:
@@ -58,7 +70,8 @@ class Morse:
             if self.sequence[0][0] <= 0:
                 self.sequence.pop(0)
                 self.setup(0)  # everything off
-                               
+
+    # queue up a dot, dash, or one of the space types             
     def dot(self):
         self.sequence.append((self.delayscale,1,False))
         self.sequence.append((self.delayscale,0,False))
@@ -73,10 +86,12 @@ class Morse:
     def wspace(self): # note: the 7th delay is the previous cspace!
         self.sequence.append((6*self.delayscale+self.wspace_xtra,0,False))
     
+    # queue an arbitrary delay in seconds
     def delay(self,n=1):  # delay some number of seconds
         for i in range(n):
             self.sequence.append((1000,0,False))
 
+# the Morse code table (note all uppercase)
     morse = {
         "A":".-",
         "B":"-...",
@@ -121,9 +136,13 @@ class Morse:
         "#":".-.-."    # AR
     }
 
+# send a string. Spaces/CR/LF are OK. ~ delays 1 second
+# control characters are ignored, but others issue a warning
+# that you will probably never see and keeps going
+# characters can be upper/lower
     def send(self,input_string):
         for char in input_string:
-            if char == " ":
+            if char == " " or char=='\r' or char=='\n':
                 self.wspace()  # Call wspace() for word space
                 continue
             if char == "~":
@@ -136,7 +155,7 @@ class Morse:
                 print(f"Warning: '{char}' not found in Morse dictionary")
                 continue
             morse_code = self.morse[char]  # Lookup in the morse dictionary
-            
+            # queue the dots and dashes
             for symbol in morse_code:
                 if symbol == ".":
                     self.dot()  # Call dot() for a period

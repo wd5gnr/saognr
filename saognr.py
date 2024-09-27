@@ -11,7 +11,7 @@ from math import sin
 from MenuMorse import MenuMorse
 from MenuSystem import MenuSystem
 from Button import BSButton
-from i2ctarget import I2cmenutarget
+from i2ctarget import I2CMenuTarget
 from config import Config  
 
 # 13 WPM is about 90ms per element (Source: http://www.kent-engineers.com/codespeed.htm)
@@ -33,7 +33,7 @@ class MorseMain(MenuMorse):
         self.setall(self.load((self.message, self.repeat_every, self.wpm, self.cw_tone)))
 
         # I2C input configuration
-        self.i2c_in = I2cmenutarget(0, sda=Config.I2C_SDA_PIN, scl=Config.I2C_SCL_PIN, address=Config.I2C_ADDRESS)
+        self.i2c_in = I2CMenuTarget(0, sda=Config.I2C_SDA_PIN, scl=Config.I2C_SCL_PIN, address=Config.I2C_ADDRESS)
 
         # NeoPixel LED configuration
         self.led = neopixel.NeoPixel(Pin(Config.CPU_LED_PIN), 1)

@@ -5,7 +5,7 @@ from machine import mem32, Pin
 # Adapted from https://forums.raspberrypi.com/viewtopic.php?t=302978
 # There is also memory-style code on the forum that hasn't been tested.
 
-class I2ctarget:
+class I2CTarget:
     I2C0_BASE = 0x40044000  # Base address for I2C0
     I2C1_BASE = 0x40048000  # Base address for I2C1
     IO_BANK0_BASE = 0x40014000  # Base address for GPIO configuration
@@ -101,7 +101,7 @@ class I2ctarget:
 
 # i2cmenutarget is a subclass of i2ctarget, used to handle I2C-driven menu requests.
 # If integrated with a command handler, it passes menu options via I2C.
-class I2cmenutarget(I2ctarget):
+class I2CMenuTarget(I2CTarget):
     def menu(self, dummy1, dummy2):
         """
         Handle I2C input as a menu request.

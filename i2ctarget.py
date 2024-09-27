@@ -2,7 +2,7 @@ from machine import mem32,Pin
 
 # Poll and receive from the I2C hardware
 # adapted from https://forums.raspberrypi.com/viewtopic.php?t=302978
-# there is also block code there that I have not tested
+# there is also memory-style code there that I have not tested
 
 class i2ctarget:
     I2C0_BASE = 0x40044000

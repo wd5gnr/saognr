@@ -10,6 +10,8 @@ import time
 # Or you could set one color for level 1 
 # and then set the color to the command "color" for level 2
 
+MENU_SCAN_TIME=0.05   # how often to scan buttons
+
 class MenuSystem:
     def __init__(self,buttons,leds=None,feedback=None,mcolor=(127,0,255)):
         self.buttons=buttons
@@ -21,7 +23,7 @@ class MenuSystem:
     # black (not really), brown (sort of), red, orange (sort of), yellow, green, blue, violet, gray (sort of), white
     colors=[(10,0,10),(34,17,0),(255,0,0),(255,165,0),(255,255,0),(0,255,0),(0,0,255),(127,0,255),(64,64,64),(255,255,255)]
     def menu(self,value=0,max=9):
-        if self.fb:
+        if self.fb:  # if feedback enabled, stop anything sending and send our value
             self.fb.abort()
             self.fb.send(str(value))
         while True:
@@ -42,5 +44,5 @@ class MenuSystem:
                 if self.fb:
                     self.fb.abort()
                     self.fb.send(str(value))  # send this value
-            time.sleep(0.05)  # fast wait
+            time.sleep(MENU_SCAN_TIME)  # fast wait
 

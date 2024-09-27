@@ -4,11 +4,13 @@ from machine import Pin, PWM, Timer
 from Morse import Morse
 from rp2 import bootsel_button
 
+from config import config
 
 # This class knows how to drive LEDs and the speaker
 class MorseCode(Morse):
 
-    def __init__(self,wpm=13, cspace_xtra=1, wspace_xtra=1, cw_tone=800):
+    def __init__(self,wpm=config.DEF_WPM, cspace_xtra=config.DEF_CSPACE_XTRA, wspace_xtra=config.DEF_WSPACE_XTRA, 
+                 cw_tone=config.DEF_CW_TONE):
         super().__init__(wpm, cspace_xtra, wspace_xtra)
         self.leds=neopixel.NeoPixel(Pin.board.GP14,4)
         self.speaker=PWM(Pin(Pin.board.GP0))

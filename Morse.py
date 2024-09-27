@@ -1,5 +1,6 @@
 import time
 from machine import Timer
+from config import config
 
 # This class doesn't know about audio or LEDs or anything else
 # It just does code and you have to override setup and/or proc_input to do what you really want
@@ -7,14 +8,17 @@ from machine import Timer
 # The setup has to set up whatever you are doing to send a dot or a dash
 # That might mean keying a transmitter or a light or a buzzer or whatever you do to make dots and dashes
 
+
+
+
 class Morse:
     # code sounds a little more natural with some extra spaces, but you can change that if you like
-    def __init__(self, wpm=13, cspace_xtra=1, wspace_xtra=1):
-        self.timer=Timer(-1)
+    def __init__(self, wpm=config.DEF_WPM, cspace_xtra=config.DEF_CSPACE_XTRA, wspace_xtra=config.DEF_WSPACE_XTRA):
+        self.timer=Timer(-1) # 1 ms timer
         self.timer.init(period=1, mode=Timer.PERIODIC, callback=lambda t: self.timer_callback(t))
-        self.sequence=[]
+        self.sequence=[]  # list of schedule events (dots/dashes/spaces)
         self.wpm=wpm
-        self.setscale()
+        self.setscale()  # compute delays from wpm
         self.cspace_xtra=cspace_xtra
         self.wspace_xtra=wspace_xtra
  # constants
@@ -35,7 +39,7 @@ class Morse:
         self.setup(0)
         self.sequence=[]
     
-    def proc_input(self):     # a place to process inputs
+    def proc_input(self):     # a place to process inputs (used in subclasses)
         pass
         
     # set up output
@@ -44,6 +48,7 @@ class Morse:
             print(".")
         elif element==Morse.DASH:
             print("-")
+        # normally you'd handle Morse.STOP too but here we don't care
         
     # The timer processes tuples ( count, element, in_progressflag)
     # The count will work down to zero, the element is DOT/DASH/SPACE, in progress is always false until
@@ -133,7 +138,7 @@ class Morse:
         ",":"-.-.",
         "=":"-...-",   # BT
         "/":"-..-.",
-        "#":".-.-."    # AR
+        "@":".-.-."    # AR
     }
 
 # send a string. Spaces/CR/LF are OK. ~ delays 1 second

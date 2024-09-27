@@ -13,20 +13,7 @@ from Button import BSButton
 from i2ctarget import i2cmenutarget
 from math import sin
 
-TIME_SCALE=10   # how many ticks in a second for main loop
-# default things
-DEF_WPM=13
-DEF_CSPACE_XTRA=1
-DEF_WSPACE_XTRA=1
-DEF_REPEAT_EVERY=30
-DEF_CW_TONE=800
-
-I2C_SDA=4
-I2C_SCL=5
-I2C_ADD=0x73
-CPU_LED=Pin.board.GP16
-CPU_LED_BASE_COLOR=(0, 64, 0)   # note, will be multipled by up to 2!
-CPU_LED_BREATHE_TIME=60
+from config import config
 
 
 
@@ -34,7 +21,7 @@ CPU_LED_BREATHE_TIME=60
 class MorseMain(MenuMorse):
     # config file name
     fn="/saognr.cfg"    # config file name
-    def __init__(self, wpm=DEF_WPM, cspace_xtra=DEF_CSPACE_XTRA, wspace_xtra=DEF_WSPACE_XTRA, repeat_every=DEF_REPEAT_EVERY*TIME_SCALE):
+    def __init__(self, wpm=config.DEF_WPM, cspace_xtra=config.DEF_CSPACE_XTRA, wspace_xtra=config.DEF_WSPACE_XTRA, repeat_every=config.DEF_REPEAT_EVERY*config.TIME_SCALE):
         super().__init__(wpm, cspace_xtra, wspace_xtra)
         self.countdown=0
         self.repeat_every=repeat_every
@@ -43,11 +30,11 @@ class MorseMain(MenuMorse):
         self.setall()   # defaults
         # load a file, if any
         self.setall(self.load(( self.message, self.repeat_every, self.wpm, self.cw_tone)))
-        self.i2cin=i2cmenutarget(0,sda=I2C_SDA,scl=I2C_SCL,address=I2C_ADD)
-        self.led=neopixel.NeoPixel(CPU_LED,1)
-        self.setLED(CPU_LED_BASE_COLOR)
+        self.i2cin=i2cmenutarget(0,sda=config.I2C_SDA,scl=config.I2C_SCL,address=config.I2C_ADD)
+        self.led=neopixel.NeoPixel(config.CPU_LED,1)
+        self.setLED(config.CPU_LED_BASE_COLOR)
         self.bTimer=Timer(-1)
-        self.bTimer.init(period=CPU_LED_BREATHE_TIME, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
+        self.bTimer.init(period=config.CPU_LED_BREATHE_TIME, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
 
 # set the RP2040-Zero onboard GRB LED (pass RGB, we will untangle it)
     def setLED(self,color):
@@ -61,12 +48,12 @@ class MorseMain(MenuMorse):
         if self.bcounter>628:  # 2*pi * 100 
             self.bcounter=0
         modulate=sin(float(self.bcounter)/100.0)+1.0   # now 0-2
-        color=CPU_LED_BASE_COLOR
+        color=config.CPU_LED_BASE_COLOR
         color=tuple(int(x*modulate) for x in color)
-        self.setLED(color)  # green goes from 0 to 128
+        self.setLED(color)  # note base color gets X2 (max) so never more than 127
 
 # set all config values and scale
-    def setall(self,setup=(0,DEF_REPEAT_EVERY*TIME_SCALE, DEF_WPM, DEF_CW_TONE)):
+    def setall(self,setup=(0,config.DEF_REPEAT_EVERY*config.TIME_SCALE, config.DEF_WPM, config.DEF_CW_TONE)):
         (self.message, self.repeat_every, self.wpm, self.cw_tone)=setup
         self.setscale()
 
@@ -99,7 +86,7 @@ class MorseMain(MenuMorse):
     def cmd2(self,menu):  # select delay
         # default delays in seconds (0 means don't ever autoplay; only trigger)
         choice=[ 30, 60, 90, 300, 600, 900, 1800, 3600, 7200 ,0 ]
-        self.repeat_every=choice[menu.menu(choice.index(self.repeat_every),9)]*TIME_SCALE
+        self.repeat_every=choice[menu.menu(choice.index(self.repeat_every),9)]*config.TIME_SCALE
         if self.repeat_every==0:
             self.countdown=1
         else:
@@ -202,7 +189,7 @@ class MorseMain(MenuMorse):
                 return
             c=c&0xF
             cmds=self.getcmdlist()
-            if c>0 and c<=len(cmd):
+            if c>0 and c<=len(cmds):
                 cmds[c-1](self.i2cin)
             elif c==0xe:
                 self.abort()
@@ -242,7 +229,7 @@ class MorseMain(MenuMorse):
             if self.i2cin.any():       # check for I2C
                 # an i2c command is pending
                 self.do_i2c()
-            time.sleep(1.0/TIME_SCALE)
+            time.sleep(1.0/config.TIME_SCALE)
 
 def main():
     time.sleep(0.1) # Wait for USB to become ready

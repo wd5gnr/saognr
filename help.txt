@@ -26,13 +26,13 @@ Bright white - 9
 Use the bootsel button to change your selection (if you want to change it) and then long press to accept. 
 
 The first level menu commands are:
-0 - Exit menu
-1 - Select message (0-9 on submenu)
-2 - Select delay in seconds (30, 60, 90, 300, 600, 900, 1800, 3600, 7200, 0 - zero is manual trigger only)
-3 - Select speed in WPM (13, 5, 20, 25, 50)
-4 - Select tone (800, 440, 1000, 1200)
-5 - Save current configuration (0=no, 1=yes, 2=delete configuration; NOTE: configuration loads on reboot)
-6 - Reset to default configuration (0=no, 1=yes; NOTE: does not save values)
+0 - Exit menu  [ Dim Purple ]
+1 - Select message (0-9 on submenu) [ Brownish Yellow ]
+2 - Select delay in seconds (30, 60, 90, 300, 600, 900, 1800, 3600, 7200, 0 - zero is manual trigger only) [ Red ]
+3 - Select speed in WPM (13, 5, 20, 25, 50) [ Orange Yellow]
+4 - Select tone (800, 440, 1000, 1200) [ Yellow ]
+5 - Save current configuration (0=no, 1=yes, 2=delete configuration; NOTE: configuration loads on reboot) [ Green ]
+6 - Reset to default configuration (0=no, 1=yes; NOTE: does not save values) [ Blue ]
 
 I2C Interface
 If you send normal ASCII bytes via I2C they will be sent (perhaps after whatever is currently being sent)

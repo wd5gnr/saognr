@@ -7,7 +7,7 @@ class Config:
     DELAY_TABLE = [30, 60, 90, 300, 600, 900, 1800, 3600, 7200, 0]
     
     # Menu choices for Words Per Minute (WPM) settings
-    WPM_TABLE = [13, 5, 20, 25, 50]
+    WPM_TABLE = [13, 5, 20, 25, 50] 
     
     # Menu choices for Continuous Wave (CW) tone frequencies in Hz; 0 means no tone
     TONE_TABLE = [800, 440, 1000, 1200, 0]
@@ -32,7 +32,7 @@ class Config:
     # Onboard NeoPixel configuration
     CPU_LED_PIN = 16  # Pin controlling onboard NeoPixel
     CPU_LED_BASE_COLOR = (0, 64, 0)  # Base color for the NeoPixel (R, G, B)
-    CPU_LED_BREATHE_TIME = 60  # Rate at which the onboard NeoPixel "breathes" (in seconds)
+    CPU_LED_BREATHE_TIME = 60  # Rate at which the onboard NeoPixel "breathes" (in milliseconds)
 
     # Button press threshold configuration
     LONG_PRESS_THRESHOLD = 10  # Threshold for a long press (in 100 ms ticks)

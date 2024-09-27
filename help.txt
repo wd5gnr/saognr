@@ -33,6 +33,7 @@ The first level menu commands are:
 4 - Select tone (800, 440, 1000, 1200) [ Yellow ]
 5 - Save current configuration (0=no, 1=yes, 2=delete configuration; NOTE: configuration loads on reboot) [ Green ]
 6 - Reset to default configuration (0=no, 1=yes; NOTE: does not save values) [ Blue ]
+7 - Reset message counter to 1 [green] 
 
 I2C Interface
 If you send normal ASCII bytes via I2C they will be sent (perhaps after whatever is currently being sent)
@@ -42,11 +43,11 @@ requires a second byte that will be between C0-C9 to do a menu selection
 
 So to select message 4 you would send 0x81 0xC4, for example.
 
-Commands >9 may or may not take more bytes. Currently there is only one:
+Commands >9 are I2C only and may or may not take more bytes. Currently there is only one:
 
 0x8E - abort whatever is being sent immediately (no second byte)
 
-Note: Message 9 is set to empty so if you want to use ONLY as an I2C output you can select that mesage 
+Note: Message 9 is set to empty by default so if you want to use ONLY as an I2C output you can select that mesage 
 OR set the delay to 0 (which will still let you manually trigger with the button)
 
 Class Hiearchy

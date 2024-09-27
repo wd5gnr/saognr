@@ -119,6 +119,11 @@ class MorseMain(MenuMorse):
        yesno=menu.menu(0,1)
        if yesno==1:
            self.setall()
+
+    def cmd7(self,menu):    # reset counter
+        yesno=menu.menu(0,1)
+        if yesno==1:
+            self.msg_ctr=1
            
  
     def save(self, data):
@@ -138,7 +143,7 @@ class MorseMain(MenuMorse):
    
 # get command array
     def getcmdlist(self):
-        return [self.cmd1, self.cmd2, self.cmd3, self.cmd4, self.cmd5, self.cmd6 ]
+        return [self.cmd1, self.cmd2, self.cmd3, self.cmd4, self.cmd5, self.cmd6, self.cmd7 ]
 # show a menu
     def showmenu(self,btn):
         cmds=self.getcmdlist()

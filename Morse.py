@@ -135,9 +135,13 @@ class Morse:
         "8":"---..",
         "9":"----.",
         ".":".-.-.-",
-        ",":"-.-.",
+        ",":"--..--",
         "=":"-...-",   # BT
         "/":"-..-.",
+        "?":"..--..",
+        ":":"---...",
+        "-":"-....-",
+        "!":"-.-.--",
         "@":".-.-."    # AR
     }
 
@@ -150,7 +154,7 @@ class Morse:
             if char == " " or char=='\r' or char=='\n':
                 self.wspace()  # Call wspace() for word space
                 continue
-            if char == "~":
+            if char == config.DELAY_CHAR:
                 self.delay()
                 continue
             if char < ' ':

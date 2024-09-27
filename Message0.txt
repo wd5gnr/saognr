@@ -1,2 +1,2 @@
 # the default message
-CQ ES 73 DE WD5GNR =# comments are ignored to the end of line
+CQ ES 73 DE WD5GNR message _ =# comments are ignored to the end of line

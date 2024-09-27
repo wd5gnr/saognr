@@ -64,5 +64,16 @@ i2cmenutarget (i2ctarget.py) - i2c receiver that can optionally act as menu inpu
 i2ctarget - Polling reception of data via I2C and can stand in for a menu object
 
 Other files
-MessageN.txt (N=0 to 9): Message to send. ~ is a long (1s) pause. You can include #comments which go to the end of the line
+MessageN.txt (N=0 to 9): Message to send (see below)
 saognr.cfg Config file used to save state for reboot
+config.py Global config for options
+
+Message format
+You can put any character you want that is in the Morse table (see Morse.py). Case doesn't matter.
+An _ will be replaced with an increasing count that starts at 1 on reboot and rolls over at 9999.
+A ~ will insert a 1 second pause.
+New lines are treated as a space
+You can include comments using # and they go to the end of the line.
+
+You could, for example, say:
+Message _ ~~~ Hello # say hello for each message

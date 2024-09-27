@@ -4,6 +4,7 @@ import os
 import gc
 from machine import Pin, PWM, Timer
 from utime import sleep
+from re import sub
 
 # 13 WPM is about 90ms per element for the record (92.31 from http://www.kent-engineers.com/codespeed.htm)
 
@@ -85,8 +86,8 @@ class MorseMain(MenuMorse):
     
     def cmd2(self,menu):  # select delay
         # default delays in seconds (0 means don't ever autoplay; only trigger)
-        choice=[ 30, 60, 90, 300, 600, 900, 1800, 3600, 7200 ,0 ]
-        self.repeat_every=choice[menu.menu(choice.index(self.repeat_every),9)]*config.TIME_SCALE
+        choice=config.DELAY_TABLE
+        self.repeat_every=choice[menu.menu(choice.index(self.repeat_every),len(choice)-1)]*config.TIME_SCALE
         if self.repeat_every==0:
             self.countdown=1
         else:
@@ -94,15 +95,15 @@ class MorseMain(MenuMorse):
     
     def cmd3(self,menu):   # select speed
         # default speeds
-        choice=[13, 5, 20, 25, 50]
-        self.wpm=choice[menu.menu(choice.index(self.wpm),4)]
+        choice=config.WPM_TABLE
+        self.wpm=choice[menu.menu(choice.index(self.wpm),len(choice)-1)]
         self.setscale()
         
     
     def cmd4(self,menu):    # select tone
         # default tone.. 0 means silent
-        choice=[ 800, 440, 1000, 1200, 0 ]
-        self.cw_tone=choice[menu.menu(choice.index(self.cw_tone),4)]
+        choice=config.TONE_TABLE
+        self.cw_tone=choice[menu.menu(choice.index(self.cw_tone),len(choice)-1)]
     
     def cmd5(self,menu):   # save config for reboot
         yesno=menu.menu(0,2)
@@ -152,7 +153,6 @@ class MorseMain(MenuMorse):
 
 
     def getFile(self,number=0):
-        from re import sub
     # Ensure the number is between 0 and 9
         if number < 0 or number > 9:
             raise ValueError("Number must be between 0 and 9")
@@ -195,8 +195,14 @@ class MorseMain(MenuMorse):
                 self.abort()
 
 # play the curent message
+    msg_ctr=1   # message counter (use _ to play in message)
     def play(self):
-        self.send(self.getFile(self.message))
+        s=self.getFile(self.message)
+        s=sub("_",f"{self.msg_ctr}",s)
+        self.send(s)
+        self.msg_ctr=self.msg_ctr+1
+        if self.msg_ctr>9999:
+            self.msg_ctr=1     # roll over counter at 9999
 
 
 # start here

@@ -142,8 +142,10 @@ class Morse:
         ":":"---...",
         "-":"-....-",
         "!":"-.-.--",
-        "@":".-.-."    # AR
+        "+":".-.-."    # AR
     }
+
+# if you want to add more punctuation see https://k3wwp.com/cw_ss_list_punc.html
 
 # send a string. Spaces/CR/LF are OK. ~ delays 1 second
 # control characters are ignored, but others issue a warning

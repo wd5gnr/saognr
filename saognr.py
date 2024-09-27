@@ -36,6 +36,7 @@ class MorseMain(MenuMorse):
         self.setLED(config.CPU_LED_BASE_COLOR)
         self.bTimer=Timer(-1)
         self.bTimer.init(period=config.CPU_LED_BREATHE_TIME, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
+        self.autorepeat=False # only set by special message
 
 # set the RP2040-Zero onboard GRB LED (pass RGB, we will untangle it)
     def setLED(self,color):
@@ -204,6 +205,7 @@ class MorseMain(MenuMorse):
     def play(self):
         s=self.getFile(self.message)
         s=sub("_",f"{self.msg_ctr}",s)
+        self.autorepeat=(s[0]==config.DELAY_CHAR)
         self.send(s)
         self.msg_ctr=self.msg_ctr+1
         if self.msg_ctr>9999:
@@ -213,7 +215,7 @@ class MorseMain(MenuMorse):
 # start here
     def main(self):
         while True:
-            if self.countdown==0:   # time to send?
+            if self.countdown==0 or (self.autorepeat and self.sequence==[]):   # time to send?
                 if self.doMenu==False:
                     self.play()
                     gc.collect()

@@ -73,6 +73,7 @@ Message format
 You can put any character you want that is in the Morse table (see Morse.py). Case doesn't matter.
 An _ will be replaced with an increasing count that starts at 1 on reboot and rolls over at 9999.
 A ~ will insert a 1 second pause.
+If the very first character of a message (even before a comment) is ~ then the message will autorepeat (no delay)
 New lines are treated as a space
 You can include comments using # and they go to the end of the line.
 

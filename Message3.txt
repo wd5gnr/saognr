@@ -1,1 +1,5 @@
-MSG3
+~# Starting with ~ causes message to auto repeat
+No _ ~
+# This will say No 1 (pause) then No 2 (pause) etc.
+# Keep in mind there will be 2 second pause, 1 for the first ~ and one for the last
+# The ~ must be the absolute first character (no comments, spaces, new lines, etc) for this to work

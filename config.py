@@ -13,7 +13,7 @@ class config:
     DEF_WPM=13      # default words per minute (must be value from WPM_TABLE)
     DEF_CSPACE_XTRA=1   # extra character space
     DEF_WSPACE_XTRA=1   # extra word space
-    DEF_REPEAT_EVERY=30  # default time to repeat (needs to be a value from DELAY TABLE)
+    DEF_REPEAT_EVERY=60  # default time to repeat (needs to be a value from DELAY TABLE)
     DEF_CW_TONE=800      #  default side tone (must be from TONE_TABLE)
     DELAY_CHAR="~"      # character that causes 1 second delay in messages
 

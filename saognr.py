@@ -13,21 +13,41 @@ from Button import BSButton
 from i2ctarget import i2cmenutarget
 from math import sin
 
-TIME_SCALE=10
+TIME_SCALE=10   # how many ticks in a second for main loop
+# default things
+DEF_WPM=13
+DEF_CSPACE_XTRA=1
+DEF_WSPACE_XTRA=1
+DEF_REPEAT_EVERY=30
+DEF_CW_TONE=800
+
+I2C_SDA=4
+I2C_SCL=5
+I2C_ADD=0x73
+CPU_LED=Pin.board.GP16
+CPU_LED_BASE_COLOR=(0, 64, 0)   # note, will be multipled by up to 2!
+CPU_LED_BREATHE_TIME=60
+
+
+
 
 class MorseMain(MenuMorse):
-    def __init__(self, wpm=13, cspace_xtra=1, wspace_xtra=2, repeat_every=30*TIME_SCALE):
+    # config file name
+    fn="/saognr.cfg"    # config file name
+    def __init__(self, wpm=DEF_WPM, cspace_xtra=DEF_CSPACE_XTRA, wspace_xtra=DEF_WSPACE_XTRA, repeat_every=DEF_REPEAT_EVERY*TIME_SCALE):
         super().__init__(wpm, cspace_xtra, wspace_xtra)
         self.countdown=0
         self.repeat_every=repeat_every
-        self.message=0
+        self.message=0  # start with Message0.txt unless override in file
         self.doMenu=False
+        self.setall()   # defaults
+        # load a file, if any
         self.setall(self.load(( self.message, self.repeat_every, self.wpm, self.cw_tone)))
-        self.i2cin=i2cmenutarget(0,sda=4,scl=5,address=0x73)
-        self.led=neopixel.NeoPixel(Pin.board.GP16,1)
-        self.setLED((0,64,0))
+        self.i2cin=i2cmenutarget(0,sda=I2C_SDA,scl=I2C_SCL,address=I2C_ADD)
+        self.led=neopixel.NeoPixel(CPU_LED,1)
+        self.setLED(CPU_LED_BASE_COLOR)
         self.bTimer=Timer(-1)
-        self.bTimer.init(period=60, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
+        self.bTimer.init(period=CPU_LED_BREATHE_TIME, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
 
 # set the RP2040-Zero onboard GRB LED (pass RGB, we will untangle it)
     def setLED(self,color):
@@ -37,14 +57,16 @@ class MorseMain(MenuMorse):
 # make the onboard LED "breathe"
     bcounter=0
     def breathe_callback(self,t):
-        self.bcounter=self.bcounter+10
-        if self.bcounter>628:
+        self.bcounter=self.bcounter+10   # effectively 0.1 (since we /100 later)
+        if self.bcounter>628:  # 2*pi * 100 
             self.bcounter=0
         modulate=sin(float(self.bcounter)/100.0)+1.0   # now 0-2
-        self.setLED((0,int(64*modulate),0))  # green goes from 0 to 128
+        color=CPU_LED_BASE_COLOR
+        color=tuple(int(x*modulate) for x in color)
+        self.setLED(color)  # green goes from 0 to 128
 
 # set all config values and scale
-    def setall(self,setup=(0,30, 13, 800)):
+    def setall(self,setup=(0,DEF_REPEAT_EVERY*TIME_SCALE, DEF_WPM, DEF_CW_TONE)):
         (self.message, self.repeat_every, self.wpm, self.cw_tone)=setup
         self.setscale()
 
@@ -75,6 +97,7 @@ class MorseMain(MenuMorse):
         self.message=menu.menu(self.message)
     
     def cmd2(self,menu):  # select delay
+        # default delays in seconds (0 means don't ever autoplay; only trigger)
         choice=[ 30, 60, 90, 300, 600, 900, 1800, 3600, 7200 ,0 ]
         self.repeat_every=choice[menu.menu(choice.index(self.repeat_every),9)]*TIME_SCALE
         if self.repeat_every==0:
@@ -83,21 +106,23 @@ class MorseMain(MenuMorse):
             self.countdown=0
     
     def cmd3(self,menu):   # select speed
+        # default speeds
         choice=[13, 5, 20, 25, 50]
         self.wpm=choice[menu.menu(choice.index(self.wpm),4)]
         self.setscale()
         
     
     def cmd4(self,menu):    # select tone
+        # default tone.. 0 means silent
         choice=[ 800, 440, 1000, 1200, 0 ]
         self.cw_tone=choice[menu.menu(choice.index(self.cw_tone),4)]
     
     def cmd5(self,menu):   # save config for reboot
         yesno=menu.menu(0,2)
-        if yesno==2:
+        if yesno==2:  # erase config file
             try:
-                os.remove('/saocw.cfg')
-            except OSError:
+                os.remove(self.fn)
+            except OSError:   # didn't work? Don't care!
                 return
         if yesno==1:
             self.save([ self.message, self.repeat_every, self.wpm, self.cw_tone])
@@ -107,8 +132,7 @@ class MorseMain(MenuMorse):
        if yesno==1:
            self.setall()
            
-    fn="/saognr.cfg"    # config file name
-
+ 
     def save(self, data):
         # Write the list to the file
         with open(self.fn, 'w') as file:
@@ -138,7 +162,8 @@ class MorseMain(MenuMorse):
             cmd=cmd-1
             if cmd<maxcmd:
                 cmds[cmd](menu)
-    
+
+
     def getFile(self,number=0):
         from re import sub
     # Ensure the number is between 0 and 9
@@ -212,10 +237,12 @@ class MorseMain(MenuMorse):
                 self.button.start()
                 self.led_active=True
                 self.doMenu=False
+                self.leds.fill((0,0,0))   # turn off LEDs
+                self.leds.write()
             if self.i2cin.any():       # check for I2C
                 # an i2c command is pending
                 self.do_i2c()
-            time.sleep(0.1)
+            time.sleep(1.0/TIME_SCALE)
 
 def main():
     time.sleep(0.1) # Wait for USB to become ready

@@ -27,8 +27,9 @@ class MorseCode(Morse):
                 self.leds[3]=(0,0,0)
                 self.leds.write()
         else:
-            self.speaker.duty_u16(1000)    # make a tone
-            self.speaker.freq(self.cw_tone)
+            if self.cw_tone!=0:
+                self.speaker.freq(self.cw_tone)
+                self.speaker.duty_u16(1000)    # make a tone
             if self.led_active:            # if leds on, manage them, too
                 self.leds[0]=(128,128,128)
                 self.leds[3]=(128,128,128)

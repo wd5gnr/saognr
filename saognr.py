@@ -12,7 +12,7 @@ from MenuMorse import MenuMorse
 from MenuSystem import MenuSystem
 from Button import BSButton
 from i2ctarget import I2CMenuTarget
-from config import Config  
+from config import Config
 
 # 13 WPM is about 90ms per element (Source: http://www.kent-engineers.com/codespeed.htm)
 
@@ -38,7 +38,6 @@ class MorseMain(MenuMorse):
         # NeoPixel LED configuration
         self.led = neopixel.NeoPixel(Pin(Config.CPU_LED_PIN), 1)
         self.set_led(Config.CPU_LED_BASE_COLOR)
-
         # Timer for LED breathing effect
         self.b_timer = Timer(-1)
         self.b_timer.init(period=Config.CPU_LED_BREATHE_TIME, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
@@ -47,7 +46,7 @@ class MorseMain(MenuMorse):
 
     # Set the RP2040-Zero onboard NeoPixel LED (pass RGB, rearrange to GRB)
     def set_led(self, color):
-        self.led[0] = (color[1], color[0], color[2])  # Rearranging RGB to GRB
+        self.led[0] = (color[1], color[0], color[2])  # type: ignore # Rearranging RGB to GRB
         self.led.write()
 
     # Make the onboard LED "breathe" with sinusoidal modulation

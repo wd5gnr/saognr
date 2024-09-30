@@ -1,11 +1,11 @@
-import time
-import neopixel
 import os
 import gc
 from machine import Pin, PWM, Timer
-from utime import sleep
+import neopixel
+
+from time import sleep
 from re import sub
-from math import sin
+import breathe
 
 # Custom modules
 from MenuMorse import MenuMorse
@@ -35,31 +35,13 @@ class MorseMain(MenuMorse):
         # I2C input configuration
         self.i2c_in = I2CMenuTarget(0, sda=Config.I2C_SDA_PIN, scl=Config.I2C_SCL_PIN, address=Config.I2C_ADDRESS)
 
-        # NeoPixel LED configuration
-        self.led = neopixel.NeoPixel(Pin(Config.CPU_LED_PIN), 1)
-        self.set_led(Config.CPU_LED_BASE_COLOR)
-        # Timer for LED breathing effect
-        self.b_timer = Timer(-1)
-        self.b_timer.init(period=Config.CPU_LED_BREATHE_TIME, mode=Timer.PERIODIC, callback=lambda t: self.breathe_callback(t))
-
+        # Onboard NeoPixel LED configuration
+        # note onboard LED is GRB not RGB
+        lclr=Config.CPU_LED_BASE_COLOR
+        self.breather=breathe.Breathe(neopixel.NeoPixel(Pin(Config.CPU_LED_PIN), 1),
+                                      (lclr[1], lclr[0], lclr[2]),Config.CPU_LED_BREATHE_TIME)
         self.autorepeat = False  # Auto-repeat is set by a special message
 
-    # Set the RP2040-Zero onboard NeoPixel LED (pass RGB, rearrange to GRB)
-    def set_led(self, color):
-        self.led[0] = (color[1], color[0], color[2])  # type: ignore # Rearranging RGB to GRB
-        self.led.write()
-
-    # Make the onboard LED "breathe" with sinusoidal modulation
-    breathe_counter = 0
-
-    def breathe_callback(self, t):
-        self.breathe_counter += 10  # Increment counter (effectively 0.1 since divided by 100 later)
-        if self.breathe_counter > 628:  # Reset after 2*pi*100
-            self.breathe_counter = 0
-        modulate = sin(float(self.breathe_counter) / 100.0) + 1.0  # Sinusoidal modulation from 0 to 2
-        color = Config.CPU_LED_BASE_COLOR
-        color = tuple(int(x * modulate) for x in color)  # Modulate the base color
-        self.set_led(color)  # LED brightness oscillates by 2x (max value of 127)
 
     # Set all configuration values and scale them
     def setall(self, setup=(0, Config.DEFAULT_REPEAT_DELAY * Config.TIME_SCALE, Config.DEFAULT_WPM, Config.DEFAULT_CW_TONE)):
@@ -225,10 +207,10 @@ class MorseMain(MenuMorse):
             if self.i2c_in.any():
                 self.do_i2c()
 
-            time.sleep(1.0 / Config.TIME_SCALE)
+            sleep(1.0 / Config.TIME_SCALE)
 
 def main():
-    time.sleep(0.1)  # Wait for USB to become ready
+    sleep(0.1)  # Wait for USB to become ready
     MorseMain().main()
 
 if __name__ == "__main__":
